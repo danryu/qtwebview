@@ -7,6 +7,12 @@
 if(WIN32)
     qt_find_package(WebView2 PROVIDED_TARGETS WebView2::WebView2 MODULE_NAME core QMAKE_LIB webview2)
 endif()
+if(LINUX AND NOT ANDROID)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(WEBKIT2GTK webkit2gtk-4.1 QUIET)
+    endif()
+endif()
 #### Tests
 
 #### Features
@@ -36,6 +42,11 @@ qt_feature("webview-winrt-plugin" PUBLIC
     PURPOSE "Provides WinRT Webview plugin for Qt WebView."
     CONDITION WINRT
 )
+qt_feature("webview-linux-plugin" PUBLIC
+    LABEL "Linux WebKit (Linux only)"
+    PURPOSE "Provides Linux WebKitGtk plugin for Qt WebView."
+    CONDITION LINUX AND NOT ANDROID AND WEBKIT2GTK_FOUND
+)
 qt_feature("webview-wasm-plugin" PUBLIC
     LABEL "Wasm Webview (Web Assembly only)"
     PURPOSE "Provides Wasm WebView plugin for Qt WebView."
@@ -47,6 +58,7 @@ qt_configure_add_summary_entry(ARGS "webview-webengine-plugin")
 qt_configure_add_summary_entry(ARGS "webview-webview2-plugin")
 qt_configure_add_summary_entry(ARGS "webview-android-plugin")
 qt_configure_add_summary_entry(ARGS "webview-darwin-plugin")
+qt_configure_add_summary_entry(ARGS "webview-linux-plugin")
 qt_configure_add_summary_entry(ARGS "webview-winrt-plugin")
 qt_configure_add_summary_entry(ARGS "webview-wasm-plugin")
 qt_configure_end_summary_section()
@@ -55,4 +67,9 @@ qt_configure_add_report_entry(
     TYPE WARNING
     MESSAGE "No WebView2 SDK found, compiling QtWebView without WebView2 plugin."
     CONDITION WIN32 AND MSVC AND NOT QT_FEATURE_webview_webview2_plugin
+)
+qt_configure_add_report_entry(
+    TYPE WARNING
+    MESSAGE "No WebKitGtk found, compiling QtWebView without Linux WebKit plugin."
+    CONDITION LINUX AND NOT ANDROID AND NOT QT_FEATURE_webview_linux_plugin
 )

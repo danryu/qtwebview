@@ -21,6 +21,10 @@ if(QT_FEATURE_webview_winrt_plugin)
     add_subdirectory(winrt)
 endif()
 
+if(QT_FEATURE_webview_linux_plugin)
+    add_subdirectory(linux)
+endif()
+
 if(QT_FEATURE_webview_webengine_plugin)
     add_subdirectory(webengine)
 endif()
