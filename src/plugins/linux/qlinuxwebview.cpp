@@ -222,11 +222,12 @@ void QLinuxWebViewPrivate::loadHtml(const QString &html, const QUrl &baseUrl)
 
 void QLinuxWebViewPrivate::setCookie(const QString &domain, const QString &name, const QString &value)
 {
+    Q_UNUSED(domain)
+    Q_UNUSED(name)
+    Q_UNUSED(value)
+    
     if (!m_webView)
         return;
-    
-    WebKitWebContext *context = webkit_web_view_get_context(m_webView);
-    WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(context);
     
     // Note: webkit_cookie_new doesn't exist in webkit2gtk-4.1
     // Using a simpler approach with SoupCookie if available
@@ -238,11 +239,11 @@ void QLinuxWebViewPrivate::setCookie(const QString &domain, const QString &name,
 
 void QLinuxWebViewPrivate::deleteCookie(const QString &domain, const QString &name)
 {
+    Q_UNUSED(domain)
+    Q_UNUSED(name)
+    
     if (!m_webView)
         return;
-    
-    WebKitWebContext *context = webkit_web_view_get_context(m_webView);
-    WebKitCookieManager *cookieManager = webkit_web_context_get_cookie_manager(context);
     
     // Note: WebKit doesn't have a direct way to delete a specific cookie by name/domain
     // This is a simplified implementation
@@ -277,27 +278,29 @@ void QLinuxWebViewPrivate::runJavaScriptPrivate(const QString &script, int callb
                                            JSCallbackData *data = static_cast<JSCallbackData*>(userData);
                                            
                                            GError *error = nullptr;
-                                           WebKitJavascriptResult *jsResult = webkit_web_view_evaluate_javascript_finish(
+                                           JSCValue *jsValue = webkit_web_view_evaluate_javascript_finish(
                                                WEBKIT_WEB_VIEW(object), result, &error);
                                            
                                            QVariant resultValue;
-                                           if (jsResult) {
-                                               JSCValue *value = webkit_javascript_result_get_js_value(jsResult);
-                                               if (jsc_value_is_string(value)) {
-                                                   char *str = jsc_value_to_string(value);
+                                           if (jsValue && !error) {
+                                               if (jsc_value_is_string(jsValue)) {
+                                                   char *str = jsc_value_to_string(jsValue);
                                                    resultValue = QString::fromUtf8(str);
                                                    g_free(str);
-                                               } else if (jsc_value_is_number(value)) {
-                                                   resultValue = jsc_value_to_double(value);
-                                               } else if (jsc_value_is_boolean(value)) {
-                                                   resultValue = jsc_value_to_boolean(value);
+                                               } else if (jsc_value_is_number(jsValue)) {
+                                                   resultValue = jsc_value_to_double(jsValue);
+                                               } else if (jsc_value_is_boolean(jsValue)) {
+                                                   resultValue = jsc_value_to_boolean(jsValue);
                                                }
-                                               webkit_javascript_result_unref(jsResult);
                                            }
                                            
                                            if (error) {
                                                qWarning() << "JavaScript execution error:" << error->message;
                                                g_error_free(error);
+                                           }
+                                           
+                                           if (jsValue) {
+                                               g_object_unref(jsValue);
                                            }
                                            
                                            emit data->self->javaScriptResult(data->callbackId, resultValue);
