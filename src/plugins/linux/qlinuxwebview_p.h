@@ -22,7 +22,11 @@
 
 #include <private/qabstractwebview_p.h>
 
+// Prevent GLib headers from conflicting with Qt's signals macro
+#define QT_NO_SIGNALS_SLOTS_KEYWORDS
+#undef signals
 #include <webkit2/webkit2.h>
+#define signals Q_SIGNALS
 
 QT_BEGIN_NAMESPACE
 
@@ -58,7 +62,6 @@ public:
 
     QString httpUserAgent() const override;
     void setHttpUserAgent(const QString &httpUserAgent) override;
-    QUrl url() const override;
     void setUrl(const QUrl &url) override;
     bool canGoBack() const override;
     bool canGoForward() const override;
